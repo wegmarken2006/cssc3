@@ -22,6 +22,9 @@ namespace Cssc3.Test
             var p1 = new Primitive(name: "P1", inputs: lu1, rate: Rate.RateKr, 
             outputs: lr1);
             var p2 = new Primitive(name: "P2", rate: Rate.RateAr); 
+            var lu2 = new UgenList();
+            lu2.Add(p1);
+            lu2.Add(p2);
 
             Assert.IsTrue(p1.name == "P1", "Primitive Name");
             Assert.IsTrue(p2.name == "P2", "Primitive Name 2");
