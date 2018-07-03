@@ -12,6 +12,7 @@ namespace MainTest
 {
     class Program
     {
+        
         static void Main(string[] args)
         {
             var c1 = new Constant<int>(12);
