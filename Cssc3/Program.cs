@@ -27,13 +27,11 @@ namespace MainTest
             var mg1 = new Mrg(left: (object)p1, right: (object)mc1);
             var mg2 = new Mrg(left: (object)p2, right: (object)p1);
             var mg3 = new Mrg(left: (object)mc1, right: (object)p2);
+            var ill1 = new List<List<int>>{new List<int>{1,2,3}, new List<int>{4, 5, 6}};
+            var ill2 = transposer(ill1);
 
-
-
-            Console.WriteLine("Mce Extend");
-            printUgens(mce_extend(3, mg2));
-            Console.WriteLine("Mce Extend");
-            printUgens(mce_extend(4, p2));
+            printLList(ill1);
+            printLList(ill2);
             
 
             Console.WriteLine("END");

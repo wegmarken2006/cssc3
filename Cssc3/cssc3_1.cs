@@ -155,6 +155,9 @@ namespace Cssc3
             {
                 Console.WriteLine("Proxy: ");
             }
+            else {
+                Console.Write(ugen);
+            }
 
 
         }
@@ -211,24 +214,71 @@ namespace Cssc3
             {
                 var ex = mce_extend(n, ((Mrg)(object)ugen).left);
                 var len = ex.Count;
-                if (len > 0) {
-                    var outv = new List<object>{ugen};
+                if (len > 0)
+                {
+                    var outv = new List<object> { ugen };
                     outv.AddRange(ex.GetRange(1, n - 1));
                     return outv;
                 }
-                else {
+                else
+                {
                     throw new Exception("mce_extend");
                 }
             }
             else
             {
                 var outv = new List<object>();
-                for (var ind = 0; ind < n; ind++) {
+                for (var ind = 0; ind < n; ind++)
+                {
                     outv.Add(ugen);
                 }
                 return outv;
             }
         }
+        public static bool is_mce<T>(T ugen)
+        {
+            if (ugen is Mce)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        public static void printLList<T>(List<List<T>> iList)
+        {
+            var len1 = iList.Count;
+            var len2 = iList[0].Count;
 
+            for (var ind1 = 0; ind1 < len1; ind1++)
+            {
+                for (var ind2 = 0; ind2 < len2; ind2++)
+                {
+                    printUgen(iList[ind1][ind2]);
+                    Console.Write(" ");
+                }
+                Console.WriteLine("");
+            }
+        }
+
+        public static List<List<T>> transposer<T>(List<List<T>> iList)
+        {
+            var len1 = iList.Count;
+            var len2 = iList[0].Count;
+            var outv = new List<List<T>>();
+            for (var ind = 0; ind < len2; ind++)
+            {
+                outv.Add(new List<T>());
+            }
+            for (var ind2 = 0; ind2 < len2; ind2++)
+            {
+                for (var ind1 = 0; ind1 < len1; ind1++)
+                {
+                    outv[ind2].Add(iList[ind1][ind2]);
+                }
+            }
+            return outv;
+        }
     }
 }
