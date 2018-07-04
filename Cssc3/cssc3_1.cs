@@ -165,7 +165,7 @@ namespace Cssc3
             else if (ugen is Mce)
             {
                 Console.WriteLine("Mce: " + ((Mce)(object)ugen).ugens.l.Count.ToString());
-                printUgens(((Mce)(object)ugen).ugens.l);
+                printUgens(((Mce)(object)ugen).ugens);
             }
             else if (ugen is Mrg)
             {
@@ -186,8 +186,9 @@ namespace Cssc3
 
 
         }
-        public static void printUgens(List<object> ugens)
+        public static void printUgens(UgenL ugenl)
         {
+            var ugens = ugenl.l;
             foreach (var ugen in ugens)
             {
                 Console.Write(" - ");
@@ -345,6 +346,83 @@ namespace Cssc3
             {
                 throw new Exception("Error: mce_transform");
             }
+        }
+
+        
+        public static object mce_expand<T>(T ugen) {
+            if (ugen is Mce)
+            {
+                var lst = new List<object>();
+                var ugens = ((Mce)(object)ugen).ugens.l;
+                foreach (var elem in ugens) {
+                    lst.Add(mce_expand(elem));
+                }
+                var outv = new UgenL();
+                outv.l = lst;
+                return new Mce(ugens: outv);
+            }
+            else if (ugen is Mrg)
+            {
+                var left =  ((Mrg)(object)ugen).left;
+                var right =  ((Mrg)(object)ugen).right;
+                var ug1 = mce_expand(left);
+                return new Mrg(left: ug1, right: right);
+            }
+            else
+            {
+                bool rec<V>(V ug) {
+                    if (ugen is Primitive) {
+                        var inputs = ((Primitive)(object)ug).inputs;
+                        var ins = inputs.l.Where(is_mce);
+                        return (ins.ToList().Count > 0);
+                    }
+                    else return false;
+                }
+                if (rec(ugen)) {
+                    return mce_expand(mce_transform(ugen));
+                }
+                else return ugen;
+            }
+        }
+
+        public static object mce_channel(int n, object ugen) {
+            if (ugen is Mce) {
+                var ugens = ((Mce)(object)ugen).ugens.l;
+                return ugens[n];
+            }
+            else throw new Exception("Error: mce_channel");
+        }
+
+        public static UgenL mce_channels(object ugen)
+        {
+            if (ugen is Mce)
+            {
+                var ugens = ((Mce)(object)ugen).ugens;
+                return ugens;
+            }
+            else if (ugen is Mrg) {
+                var left =  ((Mrg)(object)ugen).left;
+                var right =  ((Mrg)(object)ugen).right;
+                var lst = mce_channels(left);
+                var len = lst.l.Count;
+                if (len > 1) {
+                    var mrg1 = new Mrg(left: lst.l[0], right: right);
+                    var outv = new List<object>{mrg1};
+                    outv.AddRange(lst.l.GetRange(1, len - 1));
+                    var newOut = new UgenL();
+                    newOut.l = outv;
+                    return newOut;
+
+                }
+                else throw new Exception("Error: mce_channels");
+            }
+            else {
+                var outv = new List<object>();
+                outv.Add(ugen);
+                var newOut = new UgenL();
+                newOut.l = outv;
+                return newOut;
+            }            
         }
 
     }

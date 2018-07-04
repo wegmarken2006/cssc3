@@ -35,6 +35,7 @@ namespace Cssc3.Test
             var ill2 = transposer(ill1);
             var exmg1 = mce_extend(3, mg1);
             var mc10 = mce_transform(p3);
+            var mc11 = mce_channels(mg3);
 
 
 
@@ -54,6 +55,9 @@ namespace Cssc3.Test
             Assert.IsTrue(exmg1.Count == 3, "mce_extend");
             Assert.IsTrue(mc10 is Mce, "mce_transform 1");
             Assert.IsTrue(((Primitive)(object)mc10.ugens.l[2]).name == "P3", "mce_transform 2");
+            Assert.IsTrue(mc11.l.Count == 2, "mce_channels 1");
+            Assert.IsTrue(mc11.l[0] is Mrg, "mce_channels 2");
+            Assert.IsTrue(mc11.l[1] is Primitive, "mce_channels 3");
         }
     }
 }

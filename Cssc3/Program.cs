@@ -34,9 +34,14 @@ namespace MainTest
             var mg3 = new Mrg(left: (object)mc1, right: (object)p2);
             var exmg1 = mce_extend(3, mg1);
             var mc10 = mce_transform(p3);
+            var mx1 = mce_expand(mc10);
+            var mx2 = mce_expand(mg1);
+            var mx3 = mce_expand(p1);
+            var mc11 = mce_channels(mg3);
 
-            printUgens(exmg1);
-            printUgen(mc10);
+            printUgens(mc11);
+            //printUgen(mx2);
+            //printUgen(mx3);
 
 
             Console.WriteLine("END");
