@@ -20,11 +20,11 @@ namespace Cssc3
         }
         public class RateList : List<Rate> { }
         public class Ugen : object { }
-        public class UgenList : List<object> { }
 
         public struct UgenL
         {
             public List<object> l;
+            //vararg constructor
             public UgenL(params object[] values)
             {
                 l = new List<object>();
@@ -43,14 +43,8 @@ namespace Cssc3
 
         public struct Mce
         {
-            public UgenList ugens;
-            public Mce(UgenList ugens) => this.ugens = ugens;
-        }
-
-        public struct Mce2
-        {
             public UgenL ugens;
-            public Mce2(UgenL ugens) => this.ugens = ugens;
+            public Mce(UgenL ugens) => this.ugens = ugens;
         }
 
         public struct Mrg
@@ -79,11 +73,11 @@ namespace Cssc3
         public struct Primitive
         {
             public Rate rate;
-            public UgenList inputs;
+            public UgenL inputs;
             public RateList outputs;
             public string name;
             public int special, index;
-            public Primitive(string name, UgenList inputs = null, RateList outputs = null,
+            public Primitive(string name, UgenL inputs = new UgenL(), RateList outputs = null,
             Rate rate = Rate.RateKr, int special = 0, int index = 0)
             {
                 this.rate = rate;
@@ -141,7 +135,7 @@ namespace Cssc3
             }
             else if (ugen is Mce)
             {
-                var rates = ((Mce)(object)ugen).ugens.Select(x => rate_of(x)).ToList();
+                var rates = ((Mce)(object)ugen).ugens.l.Select(x => rate_of(x)).ToList();
                 return max_rate((RateList)rates);
             }
             else
@@ -170,15 +164,9 @@ namespace Cssc3
             }
             else if (ugen is Mce)
             {
-                Console.WriteLine("Mce: " + ((Mce)(object)ugen).ugens.Count.ToString());
-                printUgens(((Mce)(object)ugen).ugens);
+                Console.WriteLine("Mce: " + ((Mce)(object)ugen).ugens.l.Count.ToString());
+                printUgens(((Mce)(object)ugen).ugens.l);
             }
-            else if (ugen is Mce2)
-            {
-                Console.WriteLine("Mce2: " + ((Mce2)(object)ugen).ugens.l.Count.ToString());
-                printUgens(((Mce2)(object)ugen).ugens.l);
-            }
-
             else if (ugen is Mrg)
             {
                 Console.WriteLine("Mrg: ");
@@ -227,7 +215,7 @@ namespace Cssc3
         {
             if (ugen is Mce)
             {
-                return ((Mce)(object)ugen).ugens.Count;
+                return ((Mce)(object)ugen).ugens.l.Count;
             }
             else if (ugen is Mrg)
             {
@@ -243,8 +231,7 @@ namespace Cssc3
         {
             if (ugen is Mce)
             {
-                var toExtend = ((Mce)(object)ugen).ugens;
-                var iList = (List<object>)toExtend;
+                var iList = ((Mce)(object)ugen).ugens.l;
                 return extend(iList, n);
             }
             else if (ugen is Mrg)
@@ -318,13 +305,13 @@ namespace Cssc3
             return outv;
         }
 
-        public static object mce_transform<T>(T ugen)
+        public static Mce mce_transform<T>(T ugen)
         {
             if (ugen is Primitive)
             {
                 var prim = ((Primitive)(object)ugen);
                 var inputs = prim.inputs;
-                var ins = inputs.Where(x => is_mce(x));
+                var ins = inputs.l.Where(x => is_mce(x));
                 var degs = new List<int>();
                 foreach (var elem in ins)
                 {
@@ -332,21 +319,27 @@ namespace Cssc3
                 }
                 var upr = max_num(degs, 0);
                 var ext = new List<List<object>>();
-                foreach (var elem in inputs)
+                foreach (var elem in inputs.l)
                 {
                     ext.Add(mce_extend(upr, elem));
                 }
                 var iet = transposer(ext);
-                //var outv = new List<object>();
-                var outv = new UgenList();
+                var outv = new List<object>();
+                //var outv = new UgenL();
                 foreach (var elem2 in iet)
                 {
-                    var p = new Primitive(name: prim.name, inputs: (UgenList)elem2, outputs: prim.outputs,
+                    var newInps = new UgenL();
+                    newInps.l = elem2;
+                    var p = new Primitive(name: prim.name, inputs: newInps, outputs: prim.outputs,
                      rate: prim.rate, special: prim.special, index: prim.index);
+                    //outv.l.Add(p);
                     outv.Add(p);
 
                 }
-                return new Mce(ugens: outv);
+                var newOut = new UgenL();
+                newOut.l = outv;
+                //return new Mce(ugens: outv);
+                return new Mce(ugens: newOut);
             }
             else
             {
