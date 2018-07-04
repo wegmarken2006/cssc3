@@ -37,6 +37,8 @@ namespace Cssc3.Test
             var mc10 = mce_transform(p3);
             var mc11 = mce_channels(mg3);
 
+            var nc1 = new NodeC(nid: 10, value:3);
+
 
 
 

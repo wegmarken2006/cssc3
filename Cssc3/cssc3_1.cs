@@ -9,7 +9,7 @@ using System.Linq;
 namespace Cssc3
 {
 
-    static public class SC3
+    static public partial class SC3
     {
         public enum Rate
         {
