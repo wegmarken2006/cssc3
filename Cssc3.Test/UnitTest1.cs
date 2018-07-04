@@ -21,11 +21,18 @@ namespace Cssc3.Test
             var p2 = new Primitive(name: "P2", rate: Rate.RateAr);
             var mc1 = new Mce(ugens: new UgenList { p1, p1 });
             var mc2 = new Mce(ugens: new UgenList { p1, p2 });
-            var il1 = new UgenList{c1, p2};
-            var il2 = new UgenList{c1, p2, c1, p2, c1};
+            var mc3 = new Mce(ugens: new UgenList { p1, p2, mc1 });
+            var p3 = new Primitive(name: "P3", inputs: new UgenList { mc1, mc3 }, rate: Rate.RateKr,
+                outputs: new RateList { Rate.RateIr });
+            var il1 = new UgenList { c1, p2 };
+            var il2 = new UgenList { c1, p2, c1, p2, c1 };
             var mg1 = new Mrg(left: (object)p1, right: (object)mc1);
             var mg2 = new Mrg(left: (object)p2, right: (object)p1);
             var mg3 = new Mrg(left: (object)mc1, right: (object)p2);
+            //var ill1 = new List<List<int>>{new List<int>{1,2,3}, new List<int>{4, 5, 6}};
+            var ill1 = new List<List<object>> { new List<object> { 1, 2, 3 }, new List<object> { 4, 5, 6 } };
+            var ill2 = transposer(ill1);
+
 
 
             Assert.IsTrue(p1.name == "P1", "Primitive Name");
@@ -37,6 +44,9 @@ namespace Cssc3.Test
             Assert.IsTrue(mce_extend(3, mc1).Count == 3, "mce_extend");
             Assert.IsTrue(((Primitive)(object)(mce_extend(3, mc1)[2])).name == "P1", "mce_extend 2");
             Assert.IsTrue(((Primitive)(object)(mce_extend(3, mg2)[2])).name == "P2", "mce_extend 3");
+            Assert.IsTrue(is_mce(mc1), "is_mce 1");
+            Assert.IsFalse(is_mce(mg1), "is_mce 2");
+            Assert.IsTrue(ill2.Count == 3, "transposer");
         }
     }
 }

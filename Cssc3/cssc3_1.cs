@@ -22,6 +22,19 @@ namespace Cssc3
         public class Ugen : object { }
         public class UgenList : List<object> { }
 
+        public struct UgenL
+        {
+            public List<object> l;
+            public UgenL(params object[] values)
+            {
+                l = new List<object>();
+                foreach (var value in values)
+                {
+                    this.l.Add(value);
+                }
+            }
+        }
+
         public struct Constant<T>
         {
             public T value;
@@ -33,6 +46,13 @@ namespace Cssc3
             public UgenList ugens;
             public Mce(UgenList ugens) => this.ugens = ugens;
         }
+
+        public struct Mce2
+        {
+            public UgenL ugens;
+            public Mce2(UgenL ugens) => this.ugens = ugens;
+        }
+
         public struct Mrg
         {
             //public Ugen left, right;
@@ -90,9 +110,19 @@ namespace Cssc3
             var maxr = start;
             foreach (var elem in rates)
             {
-                if (elem > start) maxr = elem;
+                if (elem > maxr) maxr = elem;
             }
             return maxr;
+        }
+
+        public static int max_num(List<int> nums, int start)
+        {
+            var max1 = start;
+            foreach (var elem in nums)
+            {
+                if (elem > max1) max1 = elem;
+            }
+            return max1;
         }
 
         public static Rate rate_of<T>(T ugen)
@@ -143,6 +173,12 @@ namespace Cssc3
                 Console.WriteLine("Mce: " + ((Mce)(object)ugen).ugens.Count.ToString());
                 printUgens(((Mce)(object)ugen).ugens);
             }
+            else if (ugen is Mce2)
+            {
+                Console.WriteLine("Mce2: " + ((Mce2)(object)ugen).ugens.l.Count.ToString());
+                printUgens(((Mce2)(object)ugen).ugens.l);
+            }
+
             else if (ugen is Mrg)
             {
                 Console.WriteLine("Mrg: ");
@@ -155,7 +191,8 @@ namespace Cssc3
             {
                 Console.WriteLine("Proxy: ");
             }
-            else {
+            else
+            {
                 Console.Write(ugen);
             }
 
@@ -262,14 +299,14 @@ namespace Cssc3
             }
         }
 
-        public static List<List<T>> transposer<T>(List<List<T>> iList)
+        public static List<List<object>> transposer(List<List<object>> iList)
         {
             var len1 = iList.Count;
             var len2 = iList[0].Count;
-            var outv = new List<List<T>>();
+            var outv = new List<List<object>>();
             for (var ind = 0; ind < len2; ind++)
             {
-                outv.Add(new List<T>());
+                outv.Add(new List<object>());
             }
             for (var ind2 = 0; ind2 < len2; ind2++)
             {
@@ -280,5 +317,42 @@ namespace Cssc3
             }
             return outv;
         }
+
+        public static object mce_transform<T>(T ugen)
+        {
+            if (ugen is Primitive)
+            {
+                var prim = ((Primitive)(object)ugen);
+                var inputs = prim.inputs;
+                var ins = inputs.Where(x => is_mce(x));
+                var degs = new List<int>();
+                foreach (var elem in ins)
+                {
+                    degs.Add(mce_degree(elem));
+                }
+                var upr = max_num(degs, 0);
+                var ext = new List<List<object>>();
+                foreach (var elem in inputs)
+                {
+                    ext.Add(mce_extend(upr, elem));
+                }
+                var iet = transposer(ext);
+                //var outv = new List<object>();
+                var outv = new UgenList();
+                foreach (var elem2 in iet)
+                {
+                    var p = new Primitive(name: prim.name, inputs: (UgenList)elem2, outputs: prim.outputs,
+                     rate: prim.rate, special: prim.special, index: prim.index);
+                    outv.Add(p);
+
+                }
+                return new Mce(ugens: outv);
+            }
+            else
+            {
+                throw new Exception("Error: mce_transform");
+            }
+        }
+
     }
 }
