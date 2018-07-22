@@ -43,7 +43,6 @@ namespace MainTest
             //printUgen(mx2);
             //printUgen(mx3);
 
-
             Console.WriteLine("END");
         }
     }

@@ -197,6 +197,20 @@ namespace Cssc3
 
         }
 
+    public static List<int> iota (int n, int init, int step)
+    {
+        if (n == 0) {
+            return new List<int>();
+        }
+        else {
+            var outL = new List<int>{init};
+            //out.addAll(outInit);
+            var retList = iota(n-1, init+step, step);
+            outL.AddRange(retList);   
+            return outL;
+        }
+    }
+
         public static List<object> extend(List<object> iList, int newLen)
         {
             var ln = iList.Count;
@@ -424,6 +438,40 @@ namespace Cssc3
                 return newOut;
             }            
         }
+
+    public static object proxify (object ugen) 
+    {
+        if (ugen is Mce) {
+            var lst = new UgenL();
+            foreach (object elem in ((Mce)ugen).ugens.l) {
+                lst.l.Add(proxify(elem));
+            }
+            return new Mce(lst);
+        }
+        else if (ugen is Mrg) {
+            var prx = proxify(((Mrg)ugen).left);
+            return new Mrg(prx, ((Mrg)ugen).right);
+        }
+        else if (ugen is Primitive) {
+            var ln = ((Primitive)ugen).outputs.Count;
+            if (ln < 2) {
+                return ugen;
+            }
+            else {
+                var lst1 = iota(ln, 0, 1);
+                var lst2 = new UgenL();
+                foreach (var ind in lst1) {
+                    lst2.l.Add(proxify(new Proxy((Primitive)ugen, ind)));
+                }
+                return new Mce(lst2);
+            }
+
+        }
+        else {
+            throw new Exception("proxify");
+        }
+    }
+
 
     }
 }
