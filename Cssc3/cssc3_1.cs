@@ -35,6 +35,31 @@ namespace Cssc3
             }
         }
 
+        public class Constant2<T> 
+        {
+            public T value {get; set;} 
+        }
+        public class Mrg2 
+        {
+            public object left {get; set;}
+            public object right {get; set;}
+        }
+        public class Control2
+        {
+            public string name {get; set;}
+            public Rate rate {get; set;} = Rate.RateKr;
+        }
+
+        public class Primitive2
+        {
+            public string name  {get; set;}
+            public UgenL inputs {get; set;}
+            public RateList outputs {get; set;}
+            public Rate rate {get; set;} = Rate.RateKr;
+            public int special {get; set;} = 0;
+            public int index {get; set;} = 0;
+        }
+
         public struct Constant<T>
         {
             public T value;

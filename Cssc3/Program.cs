@@ -14,8 +14,9 @@ namespace MainTest
     {        
         static void Main(string[] args)
         {
-            var c1 = new Constant<int>(1);
+            //var c1 = new Constant<int>(1);
             var c2 = new Constant<double>(3.3);
+            var c1 = new Constant2<int>{value=1};
             var k1 = new Control(name: "K1");
             var p1 = new Primitive(name: "P1", inputs: new UgenL(c1, c2), rate: Rate.RateKr,
                 outputs: new RateList { Rate.RateKr, Rate.RateIr });
@@ -39,7 +40,6 @@ namespace MainTest
             var mx3 = mce_expand(p1);
             var mc11 = mce_channels(mg3);
 
-            printUgens(mc11);
             //printUgen(mx2);
             //printUgen(mx3);
 
