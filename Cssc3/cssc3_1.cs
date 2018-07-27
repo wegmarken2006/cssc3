@@ -35,22 +35,22 @@ namespace Cssc3
             }
         }
 
-        public class Constant2<T> 
+        public class Constant<T> 
         {
             public T value {get; set;} 
         }
-        public class Mrg2 
+        public class Mrg
         {
             public object left {get; set;}
             public object right {get; set;}
         }
-        public class Control2
+        public class Control
         {
             public string name {get; set;}
             public Rate rate {get; set;} = Rate.RateKr;
         }
 
-        public class Primitive2
+        public class Primitive
         {
             public string name  {get; set;}
             public UgenL inputs {get; set;}
@@ -60,69 +60,18 @@ namespace Cssc3
             public int index {get; set;} = 0;
         }
 
-        public struct Constant<T>
+
+        public class Mce
         {
-            public T value;
-            public Constant(T value) => this.value = value;
+            public UgenL ugens {get; set;}
         }
 
-        public struct Mce
-        {
-            public UgenL ugens;
-            public Mce(UgenL ugens) => this.ugens = ugens;
-        }
 
-        public struct Mrg
-        {
-            //public Ugen left, right;
-            //public Mrg(Ugen left, Ugen right)
-            public object left, right;
-            public Mrg(object left, object right)
-            {
-                this.left = left;
-                this.right = right;
-            }
-        }
 
-        public struct Control
+        public class Proxy
         {
-            public string name;
-            public Rate rate;
-            public Control(string name, Rate rate = Rate.RateKr)
-            {
-                this.name = name;
-                this.rate = rate;
-            }
-        }
-
-        public struct Primitive
-        {
-            public Rate rate;
-            public UgenL inputs;
-            public RateList outputs;
-            public string name;
-            public int special, index;
-            public Primitive(string name, UgenL inputs = new UgenL(), RateList outputs = null,
-            Rate rate = Rate.RateKr, int special = 0, int index = 0)
-            {
-                this.rate = rate;
-                this.name = name;
-                this.inputs = inputs;
-                this.outputs = outputs;
-                this.special = special;
-                this.index = index;
-            }
-        }
-
-        public struct Proxy
-        {
-            public Primitive primitive;
-            public int index;
-            public Proxy(Primitive primitive, int index = 0)
-            {
-                this.primitive = primitive;
-                this.index = index;
-            }
+            public Primitive primitive {get; set;}
+            public int index {get; set;} = 0;
         }
         public static Rate max_rate(RateList rates, Rate start = Rate.RateIr)
         {
@@ -146,21 +95,21 @@ namespace Cssc3
 
         public static Rate rate_of<T>(T ugen)
         {
-            if (ugen is Control)
+            if (ugen is Control ctrl)
             {
-                return ((Control)(object)ugen).rate;
+                return ctrl.rate;
             }
-            else if (ugen is Primitive)
+            else if (ugen is Primitive pr)
             {
-                return ((Primitive)(object)ugen).rate;
+                return pr.rate;
             }
-            else if (ugen is Proxy)
+            else if (ugen is Proxy prox)
             {
-                return ((Proxy)(object)ugen).primitive.rate;
+                return prox.primitive.rate;
             }
-            else if (ugen is Mce)
+            else if (ugen is Mce mc)
             {
-                var rates = ((Mce)(object)ugen).ugens.l.Select(x => rate_of(x)).ToList();
+                var rates = (mc.ugens.l.Select(x => rate_of(x))).ToList();
                 return max_rate((RateList)rates);
             }
             else
@@ -370,8 +319,8 @@ namespace Cssc3
                 {
                     var newInps = new UgenL();
                     newInps.l = elem2;
-                    var p = new Primitive(name: prim.name, inputs: newInps, outputs: prim.outputs,
-                     rate: prim.rate, special: prim.special, index: prim.index);
+                    var p = new Primitive{name=prim.name, inputs=newInps, outputs=prim.outputs,
+                     rate=prim.rate, special=prim.special, index=prim.index};
                     //outv.l.Add(p);
                     outv.Add(p);
 
@@ -379,7 +328,7 @@ namespace Cssc3
                 var newOut = new UgenL();
                 newOut.l = outv;
                 //return new Mce(ugens: outv);
-                return new Mce(ugens: newOut);
+                return new Mce{ugens=newOut};
             }
             else
             {
@@ -398,14 +347,14 @@ namespace Cssc3
                 }
                 var outv = new UgenL();
                 outv.l = lst;
-                return new Mce(ugens: outv);
+                return new Mce{ugens=outv};
             }
             else if (ugen is Mrg)
             {
                 var left =  ((Mrg)(object)ugen).left;
                 var right =  ((Mrg)(object)ugen).right;
                 var ug1 = mce_expand(left);
-                return new Mrg(left: ug1, right: right);
+                return new Mrg{left=ug1, right=right};
             }
             else
             {
@@ -445,7 +394,7 @@ namespace Cssc3
                 var lst = mce_channels(left);
                 var len = lst.l.Count;
                 if (len > 1) {
-                    var mrg1 = new Mrg(left: lst.l[0], right: right);
+                    var mrg1 = new Mrg{left=lst.l[0], right=right};
                     var outv = new List<object>{mrg1};
                     outv.AddRange(lst.l.GetRange(1, len - 1));
                     var newOut = new UgenL();
@@ -471,11 +420,11 @@ namespace Cssc3
             foreach (object elem in ((Mce)ugen).ugens.l) {
                 lst.l.Add(proxify(elem));
             }
-            return new Mce(lst);
+            return new Mce{ugens=lst};
         }
         else if (ugen is Mrg) {
             var prx = proxify(((Mrg)ugen).left);
-            return new Mrg(prx, ((Mrg)ugen).right);
+            return new Mrg{left=prx, right=((Mrg)ugen).right};
         }
         else if (ugen is Primitive) {
             var ln = ((Primitive)ugen).outputs.Count;
@@ -486,9 +435,9 @@ namespace Cssc3
                 var lst1 = iota(ln, 0, 1);
                 var lst2 = new UgenL();
                 foreach (var ind in lst1) {
-                    lst2.l.Add(proxify(new Proxy((Primitive)ugen, ind)));
+                    lst2.l.Add(proxify(new Proxy{primitive=(Primitive)ugen, index=ind}));
                 }
-                return new Mce(lst2);
+                return new Mce{ugens=lst2};
             }
 
         }

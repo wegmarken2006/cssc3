@@ -13,23 +13,24 @@ namespace Cssc3.Test
         [TestMethod]
         public void TestMethod1()
         {
-            var c1 = new Constant<int>(1);
-            var c2 = new Constant<double>(3.3);
-            var k1 = new Control(name: "K1");
-            var p1 = new Primitive(name: "P1", inputs: new UgenL(c1, c2), rate: Rate.RateKr,
-                outputs: new RateList { Rate.RateKr, Rate.RateIr });
-            var p2 = new Primitive(name: "P2", rate: Rate.RateAr);
+            var c1 = new Constant<int>{value=1};
+            var c2 = new Constant<double>{value=3.3};
+            var k1 = new Control{name="K1"};
+            var p1 = new Primitive{name="P1", inputs=new UgenL(c1, c2), rate=Rate.RateKr,
+                outputs=new RateList { Rate.RateKr, Rate.RateIr }};
+            //var p2 = new Primitive(name: "P2", rate: Rate.RateAr);
+            var p2 = new Primitive{name="P2", rate=Rate.RateAr};
 
-            var mc1 = new Mce(ugens: new UgenL(p1, p1));
-            var mc2 = new Mce(ugens: new UgenL(p1, p2));
-            var mc3 = new Mce(ugens: new UgenL(p1, p2, mc1));
-            var p3 = new Primitive(name: "P3", inputs: new UgenL(mc1, mc3), rate: Rate.RateKr,
-                outputs: new RateList { Rate.RateIr });
+            var mc1 = new Mce{ugens=new UgenL(p1, p1)};
+            var mc2 = new Mce{ugens=new UgenL(p1, p2)};
+            var mc3 = new Mce{ugens=new UgenL(p1, p2, mc1)};
+            var p3 = new Primitive{name="P3", inputs=new UgenL(mc1, mc3), rate=Rate.RateKr,
+                outputs=new RateList { Rate.RateIr }};
             var il1 = new UgenL(c1, p2);
             var il2 = new UgenL(c1, p2, c1, p2, c1);
-            var mg1 = new Mrg(left: (object)p1, right: (object)mc1);
-            var mg2 = new Mrg(left: (object)p2, right: (object)p1);
-            var mg3 = new Mrg(left: (object)mc1, right: (object)p2);
+            var mg1 = new Mrg{left=(object)p1, right=(object)mc1};
+            var mg2 = new Mrg{left=(object)p2, right=(object)p1};
+            var mg3 = new Mrg{left=(object)mc1, right=(object)p2};
             //var ill1 = new List<List<int>>{new List<int>{1,2,3}, new List<int>{4, 5, 6}};
             var ill1 = new List<List<object>> { new List<object> { 1, 2, 3 }, new List<object> { 4, 5, 6 } };
             var ill2 = transposer(ill1);
