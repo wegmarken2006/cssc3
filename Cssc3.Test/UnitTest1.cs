@@ -13,24 +13,33 @@ namespace Cssc3.Test
         [TestMethod]
         public void TestMethod1()
         {
-            var c1 = new Constant<int>{value=1};
-            var c2 = new Constant<double>{value=3.3};
-            var k1 = new Control{name="K1"};
-            var p1 = new Primitive{name="P1", inputs=new UgenL(c1, c2), rate=Rate.RateKr,
-                outputs=new RateList { Rate.RateKr, Rate.RateIr }};
-            //var p2 = new Primitive(name: "P2", rate: Rate.RateAr);
-            var p2 = new Primitive{name="P2", rate=Rate.RateAr};
+            var c1 = new Constant<int> { value = 1 };
+            var c2 = new Constant<double> { value = 3.3 };
+            var k1 = new Control { name = "K1" };
+            var p1 = new Primitive
+            {
+                name = "P1",
+                inputs = new UgenL(c1, c2),
+                rate = Rate.RateKr,
+                outputs = new RateList { Rate.RateKr, Rate.RateIr }
+            };
+            var p2 = new Primitive { name = "P2", rate = Rate.RateAr };
 
-            var mc1 = new Mce{ugens=new UgenL(p1, p1)};
-            var mc2 = new Mce{ugens=new UgenL(p1, p2)};
-            var mc3 = new Mce{ugens=new UgenL(p1, p2, mc1)};
-            var p3 = new Primitive{name="P3", inputs=new UgenL(mc1, mc3), rate=Rate.RateKr,
-                outputs=new RateList { Rate.RateIr }};
+            var mc1 = new Mce { ugens = new UgenL(p1, p1) };
+            var mc2 = new Mce { ugens = new UgenL(p1, p2) };
+            var mc3 = new Mce { ugens = new UgenL(p1, p2, mc1) };
+            var p3 = new Primitive
+            {
+                name = "P3",
+                inputs = new UgenL(mc1, mc3),
+                rate = Rate.RateKr,
+                outputs = new RateList { Rate.RateIr }
+            };
             var il1 = new UgenL(c1, p2);
             var il2 = new UgenL(c1, p2, c1, p2, c1);
-            var mg1 = new Mrg{left=(object)p1, right=(object)mc1};
-            var mg2 = new Mrg{left=(object)p2, right=(object)p1};
-            var mg3 = new Mrg{left=(object)mc1, right=(object)p2};
+            var mg1 = new Mrg { left = (object)p1, right = (object)mc1 };
+            var mg2 = new Mrg { left = (object)p2, right = (object)p1 };
+            var mg3 = new Mrg { left = (object)mc1, right = (object)p2 };
             //var ill1 = new List<List<int>>{new List<int>{1,2,3}, new List<int>{4, 5, 6}};
             var ill1 = new List<List<object>> { new List<object> { 1, 2, 3 }, new List<object> { 4, 5, 6 } };
             var ill2 = transposer(ill1);
@@ -38,7 +47,41 @@ namespace Cssc3.Test
             var mc10 = mce_transform(p3);
             var mc11 = mce_channels(mg3);
 
-            var nc1 = new NodeC(nid: 10, value:3);
+            var nc1 = new NodeC { nid = 10, value = 3 };
+            var nk1 = new NodeK { name = "nk1", nid = 11, deflt = 5 };
+            var fpc1 = new FromPortC { port_nid = 100 };
+            var fpk1 = new FromPortK { port_nid = 101 };
+            var fpku1 = new FromPortU { port_nid = 102, port_idx = 13 };
+            NodeC ndc1 = new NodeC { nid = 20, value = 320 };
+            NodeC ndc2 = new NodeC { nid = 21, value = 321 };
+            NodeK ndk1 = new NodeK { nid = 30, name = "ndk1" };
+            NodeK ndk2 = new NodeK { nid = 31, name = "ndk2" };
+            NodeU ndu1 = new NodeU
+            {
+                nid = 40,
+                name = "ndu1",
+                inputs = new List<object> { mg1, mg2 },
+                outputs = new List<Rate> { Rate.RateAr, Rate.RateKr, Rate.RateIr },
+                ugenId = 2,
+                rate = Rate.RateAr
+            };
+            NodeU ndu2 = new NodeU
+            {
+                nid = 41,
+                name = "ndu2",
+                inputs = new List<object> { },
+                outputs = new List<Rate> { },
+                ugenId = 3,
+                rate = Rate.RateAr
+            };
+            Graph gr1 = new Graph
+            {
+                nextId = 11,
+                constants = new List<NodeC> { ndc1, ndc2 },
+                controls = new List<NodeK> { ndk1, ndk2 },
+                ugens = new List<NodeU> { ndu1, ndu2 }
+            };
+
 
 
 
@@ -61,6 +104,8 @@ namespace Cssc3.Test
             Assert.IsTrue(mc11.l.Count == 2, "mce_channels 1");
             Assert.IsTrue(mc11.l[0] is Mrg, "mce_channels 2");
             Assert.IsTrue(mc11.l[1] is Primitive, "mce_channels 3");
+            Assert.IsTrue(node_c_value(nc1) == 3, "node_c_value");
+            Assert.IsTrue(node_k_default(nk1) == 5, "node_k_default");
         }
     }
 }
