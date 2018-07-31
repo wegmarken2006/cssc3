@@ -60,7 +60,7 @@ namespace Cssc3.Test
             {
                 nid = 40,
                 name = "ndu1",
-                inputs = new List<object> { mg1, mg2 },
+                inputs = new UgenL(mg1, mg2),
                 outputs = new List<Rate> { Rate.RateAr, Rate.RateKr, Rate.RateIr },
                 ugenId = 2,
                 rate = Rate.RateAr
@@ -69,7 +69,7 @@ namespace Cssc3.Test
             {
                 nid = 41,
                 name = "ndu2",
-                inputs = new List<object> { },
+                inputs = new UgenL(),
                 outputs = new List<Rate> { },
                 ugenId = 3,
                 rate = Rate.RateAr
@@ -81,6 +81,16 @@ namespace Cssc3.Test
                 controls = new List<NodeK> { ndk1, ndk2 },
                 ugens = new List<NodeU> { ndu1, ndu2 }
             };
+            var m1 = mk_map(gr1);
+            var mcs1 = m1.cs;
+            var n1 = mk_node_c(new Constant<int>{value=320}, gr1);
+            var nn = n1.Item1;
+            var ck1 = new Control{name="ndk1",rate=Rate.RateKr,index=3};
+            var n2 = mk_node_k(ck1, gr1);
+            var nn2 = n2.Item1;
+            var n3 = mk_node<NodeC, Constant<int>>(new Constant<int>{value=320}, gr1);
+            var nn3 = n3.Item1;
+            var cs1 = new Constant<int>{value=11};
 
 
 
@@ -106,6 +116,13 @@ namespace Cssc3.Test
             Assert.IsTrue(mc11.l[1] is Primitive, "mce_channels 3");
             Assert.IsTrue(node_c_value(nc1) == 3, "node_c_value");
             Assert.IsTrue(node_k_default(nk1) == 5, "node_k_default");
+            Assert.IsTrue(m1.cs.SequenceEqual(new List<int>{20, 21}), "mmap cs");
+            Assert.IsTrue(find_c_p(3, nc1), "find_c_p");
+            Assert.IsTrue(find_k_p("ndk1", ndk1), "find_k_p");
+            Assert.IsTrue(nn.nid == 20, "mk_node_c 1");
+            Assert.IsTrue(nn2.nid == 30, "mk_node_c 2");
+            Assert.IsTrue(nn3.nid == 20, "mk_node_c 3");
+            Assert.IsTrue(fetch(31, mk_map(gr1).ks) == 1, "fetch");
         }
     }
 }

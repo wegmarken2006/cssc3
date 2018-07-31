@@ -47,6 +47,7 @@ namespace Cssc3
         public class Control
         {
             public string name {get; set;}
+            public int index {get; set;} = 0;
             public Rate rate {get; set;} = Rate.RateKr;
         }
 
