@@ -296,7 +296,7 @@ namespace Cssc3
                         return new Tuple<NodeU, Graph>(nd2, gnew);
                     }
                 }
-                var pr = new Primitive{name=name,inputs=inputs2,outputs=pr1.outputs,special=pr1.special,rate=rate} ;
+                var pr = new Primitive { name = name, inputs = inputs2, outputs = pr1.outputs, special = pr1.special, rate = rate };
                 return push_u(pr, gnew);
             }
             throw new Exception("mk_node_u");
@@ -304,10 +304,12 @@ namespace Cssc3
 
         public static Tuple<T, Graph> mk_node<T, U>(U ugen, Graph gr)
         {
-            if (ugen is Constant<int>) {
+            if (ugen is Constant<int>)
+            {
                 return (Tuple<T, Graph>)(object)mk_node_c(ugen, gr);
             }
-            else if (ugen is Primitive) {
+            else if (ugen is Primitive)
+            {
                 return (Tuple<T, Graph>)(object)mk_node_u(ugen, gr);
             }
             else if (ugen is Mrg mg)
@@ -319,6 +321,85 @@ namespace Cssc3
             }
             throw new Exception("mk_node");
         }
+        public static NodeU sc3_implicit(int num)
+        {
+            var rates = new RateList();
+            for (var ind = 1; ind < num + 1; ind++)
+            {
+                rates.Add(Rate.RateKr);
+            }
+            var node = new NodeU
+            {
+                nid = -1,
+                name = "Control",
+                inputs = new UgenL(),
+                outputs = new List<Rate>(),
+                ugenId = 0,
+                special = 0,
+                rate = Rate.RateKr
+            };
+            return node;
+        }
+
+        public static object mrg_n(UgenL lst)
+        {
+            if (lst.l.Count == 1)
+            {
+                return lst.l[0];
+            }
+            else if (lst.l.Count == 2)
+            {
+                return new Mrg{left=lst.l[0], right=lst.l[1]};
+            }
+            else
+            {
+                var newLst = new UgenL(lst.l.GetRange(1, lst.l.Count));
+                return new Mrg{left=lst.l[0], right=mrg_n(newLst)};
+            }
+        }
+
+        public static object prepare_root<T>(T ugen)
+        {
+            if (ugen is Mce mc)
+            {
+                return mrg_n(mc.ugens);
+            }
+            else if (ugen is Mrg mg)
+            {
+                return new Mrg { left = prepare_root(mg.left), right = prepare_root(mg.right) };
+            }
+            else
+            {
+                return ugen;
+            }
+        }
+
+	public static Graph empty_graph() {
+	    return new Graph{nextId=0,constants= new List<NodeC>(),controls= new List<NodeK>(),ugens= new List<NodeU>()};
+	}
+
+	public static Graph synth<T> (T ugen) {
+		try {
+		    var root = prepare_root(ugen);
+		    var gn = mk_node<object, object>(root, empty_graph());
+		    var gr = gn.Item2;
+		    var cs = gr.constants;
+		    var ks = gr.controls;
+		    var us = gr.ugens;
+		    var us1 = us;
+            us1.Reverse();
+		    if (ks.Count != 0) {
+		    	var node = sc3_implicit(ks.Count);
+		    	us1.Insert(0, node);
+		    }
+		    var grout = new Graph{nextId=-1,constants=cs,controls=ks,ugens=us1};
+		    return grout;
+			
+		} catch (Exception e) {
+			throw new Exception("synth");
+		}
+	}
+
 
     }
 }
