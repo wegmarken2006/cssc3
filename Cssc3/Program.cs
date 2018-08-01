@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static Cssc3.SC3;
+using static Cssc3.Osc;
 
 
 //git remote add origin https://github.com/wegmarken2006/cssc3.git
@@ -42,6 +43,16 @@ namespace MainTest
 
             //printUgen(mx2);
             //printUgen(mx3);
+
+
+            var a1 = encode_i16(100);
+            var b1 = decode_i16(a1);
+            Console.WriteLine(b1);
+
+            a1 = encode_i32(5000);
+            b1 = decode_i32(a1);
+            Console.WriteLine(b1);
+
 
             Console.WriteLine("END");
         }

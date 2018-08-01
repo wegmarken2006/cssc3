@@ -151,7 +151,7 @@ namespace Cssc3
                 return push_c(val, gr);
 
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw new Exception("make_node_c");
             }
@@ -195,7 +195,7 @@ namespace Cssc3
                 }
                 return push_k_p(name, gr);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 throw new Exception("mk_node_k");
             }
@@ -268,7 +268,7 @@ namespace Cssc3
                     nn.Insert(0, ng1);
                     return acc(ll.GetRange(1, ll.Count), nn, ng2);
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     throw new Exception("mk_node_u acc");
                 }
@@ -349,12 +349,12 @@ namespace Cssc3
             }
             else if (lst.l.Count == 2)
             {
-                return new Mrg{left=lst.l[0], right=lst.l[1]};
+                return new Mrg { left = lst.l[0], right = lst.l[1] };
             }
             else
             {
                 var newLst = new UgenL(lst.l.GetRange(1, lst.l.Count));
-                return new Mrg{left=lst.l[0], right=mrg_n(newLst)};
+                return new Mrg { left = lst.l[0], right = mrg_n(newLst) };
             }
         }
 
@@ -374,32 +374,37 @@ namespace Cssc3
             }
         }
 
-	public static Graph empty_graph() {
-	    return new Graph{nextId=0,constants= new List<NodeC>(),controls= new List<NodeK>(),ugens= new List<NodeU>()};
-	}
+        public static Graph empty_graph()
+        {
+            return new Graph { nextId = 0, constants = new List<NodeC>(), controls = new List<NodeK>(), ugens = new List<NodeU>() };
+        }
 
-	public static Graph synth<T> (T ugen) {
-		try {
-		    var root = prepare_root(ugen);
-		    var gn = mk_node<object, object>(root, empty_graph());
-		    var gr = gn.Item2;
-		    var cs = gr.constants;
-		    var ks = gr.controls;
-		    var us = gr.ugens;
-		    var us1 = us;
-            us1.Reverse();
-		    if (ks.Count != 0) {
-		    	var node = sc3_implicit(ks.Count);
-		    	us1.Insert(0, node);
-		    }
-		    var grout = new Graph{nextId=-1,constants=cs,controls=ks,ugens=us1};
-		    return grout;
-			
-		} catch (Exception e) {
-			throw new Exception("synth");
-		}
-	}
+        public static Graph synth<T>(T ugen)
+        {
+            try
+            {
+                var root = prepare_root(ugen);
+                var gn = mk_node<object, object>(root, empty_graph());
+                var gr = gn.Item2;
+                var cs = gr.constants;
+                var ks = gr.controls;
+                var us = gr.ugens;
+                var us1 = us;
+                us1.Reverse();
+                if (ks.Count != 0)
+                {
+                    var node = sc3_implicit(ks.Count);
+                    us1.Insert(0, node);
+                }
+                var grout = new Graph { nextId = -1, constants = cs, controls = ks, ugens = us1 };
+                return grout;
 
+            }
+            catch (Exception)
+            {
+                throw new Exception("synth");
+            }
+        }
 
     }
 }

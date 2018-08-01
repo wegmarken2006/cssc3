@@ -18,6 +18,7 @@ namespace Cssc3
             RateAr = 2,
             RateDr = 3
         }
+
         public class RateList : List<Rate> { }
         public class Ugen : object { }
 
