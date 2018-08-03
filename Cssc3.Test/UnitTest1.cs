@@ -37,12 +37,12 @@ namespace Cssc3.Test
             };
             var il1 = new UgenL(c1, p2);
             var il2 = new UgenL(c1, p2, c1, p2, c1);
-            var mg1 = new Mrg { left = (object)p1, right = (object)mc1 };
-            var mg2 = new Mrg { left = (object)p2, right = (object)p1 };
-            var mg3 = new Mrg { left = (object)mc1, right = (object)p2 };
+            var mg1 = new Mrg { left = p1, right = mc1 };
+            var mg2 = new Mrg { left = p2, right = p1 };
+            var mg3 = new Mrg { left = mc1, right = p2 };
             //var ill1 = new List<List<int>>{new List<int>{1,2,3}, new List<int>{4, 5, 6}};
-            var ill1 = new List<List<object>> { new List<object> { 1, 2, 3 }, new List<object> { 4, 5, 6 } };
-            var ill2 = transposer(ill1);
+            var ill1 = new List<List<int>> { new List<int> { 1, 2, 3 }, new List<int> { 4, 5, 6 } };
+            var ill2 = transposer<int>(ill1);
             var exmg1 = mce_extend(3, mg1);
             var mc10 = mce_transform(p3);
             var mc11 = mce_channels(mg3);
@@ -84,12 +84,12 @@ namespace Cssc3.Test
             var m1 = mk_map(gr1);
             var mcs1 = m1.cs;
             var n1 = mk_node_c(new Constant<int>{value=320}, gr1);
-            var nn = n1.Item1;
+            var nn = (NodeC)n1.Item1;
             var ck1 = new Control{name="ndk1",rate=Rate.RateKr,index=3};
             var n2 = mk_node_k(ck1, gr1);
-            var nn2 = n2.Item1;
-            var n3 = mk_node<NodeC, Constant<int>>(new Constant<int>{value=320}, gr1);
-            var nn3 = n3.Item1;
+            var nn2 = (NodeK)n2.Item1;
+            var n3 = mk_node(new Constant<int>{value=320}, gr1);
+            var nn3 = (NodeC)n3.Item1;
             var cs1 = new Constant<int>{value=11};
 
 

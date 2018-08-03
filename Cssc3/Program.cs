@@ -31,9 +31,9 @@ namespace MainTest
 
             var il1 = new UgenL(c1, p2);
             var il2 = new UgenL(c1, p2, c1, p2, c1);
-            var mg1 = new Mrg{left=(object)p1, right=(object)mc1};
-            var mg2 = new Mrg{left=(object)p2, right=(object)p1};
-            var mg3 = new Mrg{left=(object)mc1, right=(object)p2};
+            var mg1 = new Mrg{left=p1, right=mc1};
+            var mg2 = new Mrg{left=p2, right=p1};
+            var mg3 = new Mrg{left=mc1, right=p2};
             var exmg1 = mce_extend(3, mg1);
             var mc10 = mce_transform(p3);
             var mx1 = mce_expand(mc10);

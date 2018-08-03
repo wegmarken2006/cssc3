@@ -9,22 +9,29 @@ namespace Cssc3
 
     static public partial class SC3
     {
-        public class NodeC
+        public interface INode {
+            bool isNode();
+        }
+
+        public class NodeC : INode
         {
+            bool INode.isNode() { return true; }
             public int nid { get; set; }
             public int value { get; set; }
         }
 
-        public class NodeK
+        public class NodeK : INode
         {
+            bool INode.isNode() { return true; }
             public int nid { get; set; }
             public String name { get; set; }
             public int deflt { get; set; } = 0;
             public Rate rate { get; set; } = Rate.RateKr;
 
         }
-        public class NodeU
+        public class NodeU : INode
         {
+            bool INode.isNode() { return true; }
             public int nid { get; set; }
             public String name { get; set; }
             public UgenL inputs { get; set; }
@@ -33,16 +40,19 @@ namespace Cssc3
             public int special { get; set; } = 0;
             public Rate rate { get; set; } = Rate.RateKr;
         }
-        public class FromPortC
+        public class FromPortC : IUgen
         {
+            bool IUgen.isUgen() { return true; }
             public int port_nid { get; set; }
         }
-        public class FromPortK
+        public class FromPortK : IUgen
         {
+            bool IUgen.isUgen() { return true; }
             public int port_nid { get; set; }
         }
-        public class FromPortU
+        public class FromPortU : IUgen
         {
+            bool IUgen.isUgen() { return true; }
             public int port_nid { get; set; }
             public int port_idx { get; set; }
         }
@@ -67,7 +77,7 @@ namespace Cssc3
             public int p { get; set; }
         }
 
-        public static object mk_ugen(string name, UgenL inputs, RateList outputs,
+        public static IUgen mk_ugen(string name, UgenL inputs, RateList outputs,
         int ind = 0, int sp = 0, Rate rate = Rate.RateKr)
         {
             var pr1 = new Primitive { name = name, inputs = inputs, outputs = outputs, index = ind, special = sp, rate = rate };
@@ -117,7 +127,7 @@ namespace Cssc3
             return -1;
         }
 
-        public static bool find_c_p(int val, object node)
+        public static bool find_c_p(int val, INode node)
         {
             if (node is NodeC nc)
             {
@@ -126,26 +136,26 @@ namespace Cssc3
             throw new Exception("find_c_p");
         }
 
-        public static Tuple<NodeC, Graph> push_c(int val, Graph gr)
+        public static Tuple<INode, Graph> push_c(int val, Graph gr)
         {
             var node = new NodeC { nid = gr.nextId + 1, value = val };
             var consts = new List<NodeC>();
             consts.Add(node);
             consts.AddRange(gr.constants);
             var gr1 = new Graph { nextId = gr.nextId + 1, constants = consts, controls = gr.controls, ugens = gr.ugens };
-            return new Tuple<NodeC, Graph>(node, gr1);
+            return new Tuple<INode, Graph>(node, gr1);
         }
 
-        public static Tuple<NodeC, Graph> mk_node_c(object ugen, Graph gr)
+        public static Tuple<INode, Graph> mk_node_c(IUgen ugen, Graph gr)
         {
             try
             {
                 var val = ((Constant<int>)ugen).value;
                 foreach (var nd in gr.constants)
                 {
-                    if (find_c_p(val, (Object)nd))
+                    if (find_c_p(val, nd))
                     {
-                        return new Tuple<NodeC, Graph>(nd, gr);
+                        return new Tuple<INode, Graph>(nd, gr);
                     }
                 }
                 return push_c(val, gr);
@@ -157,7 +167,7 @@ namespace Cssc3
             }
         }
 
-        public static bool find_k_p(String str, object node)
+        public static bool find_k_p(String str, INode node)
         {
             if (node is NodeK nk)
             {
@@ -166,7 +176,7 @@ namespace Cssc3
             throw new Exception("find_k_p");
         }
 
-        public static Tuple<NodeK, Graph> push_k_p(object ugen, Graph gr)
+        public static Tuple<INode, Graph> push_k_p(IUgen ugen, Graph gr)
         {
             if (ugen is Control ctrl1)
             {
@@ -176,24 +186,24 @@ namespace Cssc3
                 contrs.Add(node);
                 contrs.AddRange(gr.controls);
                 var gr1 = new Graph { nextId = gr.nextId + 1, constants = gr.constants, controls = contrs, ugens = gr.ugens };
-                return new Tuple<NodeK, Graph>(node, gr1);
+                return new Tuple<INode, Graph>(node, gr1);
             }
             throw new Exception("push_k_p");
         }
 
-        public static Tuple<NodeK, Graph> mk_node_k(object ugen, Graph gr)
+        public static Tuple<INode, Graph> mk_node_k(IUgen ugen, Graph gr)
         {
             try
             {
                 var name = ((Control)ugen).name;
                 foreach (var nd in gr.controls)
                 {
-                    if (find_k_p(name, (object)nd))
+                    if (find_k_p(name, nd))
                     {
-                        return new Tuple<NodeK, Graph>(nd, gr);
+                        return new Tuple<INode, Graph>(nd, gr);
                     }
                 }
-                return push_k_p(name, gr);
+                return push_k_p(ugen, gr);
             }
             catch (Exception)
             {
@@ -201,7 +211,7 @@ namespace Cssc3
             }
         }
 
-        public static bool find_u_p(Rate rate, String name, int id1, Object node)
+        public static bool find_u_p(Rate rate, String name, int id1, INode node)
         {
             if (node is NodeU nu)
             {
@@ -210,7 +220,7 @@ namespace Cssc3
             throw new Exception("find_u_p");
         }
 
-        public static Tuple<NodeU, Graph> push_u(object ugen, Graph gr)
+        public static Tuple<INode, Graph> push_u(IUgen ugen, Graph gr)
         {
             if (ugen is Primitive pr1)
             {
@@ -229,12 +239,12 @@ namespace Cssc3
                 ugens.Add(node);
                 ugens.AddRange(gr.ugens);
                 var gr1 = new Graph { nextId = gr.nextId + 1, constants = gr.constants, controls = gr.controls, ugens = ugens };
-                return new Tuple<NodeU, Graph>(node, gr1);
+                return new Tuple<INode, Graph>(node, gr1);
             }
             throw new Exception("push_u_p");
         }
 
-        public static object as_from_port(object node)
+        public static IUgen as_from_port(INode node)
         {
             if (node is NodeC nc)
             {
@@ -251,18 +261,18 @@ namespace Cssc3
             throw new Exception("as_from_port");
         }
 
-        public static Tuple<List<object>, Graph> acc(List<object> ll, List<object> nn, Graph gr)
+        public static Tuple<List<INode>, Graph> acc(List<IUgen> ll, List<INode> nn, Graph gr)
         {
             if (ll.Count == 0)
             {
                 nn.Reverse();
-                return new Tuple<List<object>, Graph>(nn, gr);
+                return new Tuple<List<INode>, Graph>(nn, gr);
             }
             else
             {
                 try
                 {
-                    var ng = mk_node<object, object>(ll[0], gr);
+                    var ng = mk_node(ll[0], gr);
                     var ng1 = ng.Item1;
                     var ng2 = ng.Item2;
                     nn.Insert(0, ng1);
@@ -274,11 +284,11 @@ namespace Cssc3
                 }
             }
         }
-        public static Tuple<NodeU, Graph> mk_node_u(object ugen, Graph gr)
+        public static Tuple<INode, Graph> mk_node_u(IUgen ugen, Graph gr)
         {
             if (ugen is Primitive pr1)
             {
-                var ng = acc(pr1.inputs.l, new List<object>(), gr);
+                var ng = acc(pr1.inputs.l, new List<INode>(), gr);
                 var gnew = ng.Item2;
                 var ng1 = ng.Item1;
                 var inputs2 = new UgenL();
@@ -293,7 +303,7 @@ namespace Cssc3
                 {
                     if (find_u_p(rate, name, index, nd2))
                     {
-                        return new Tuple<NodeU, Graph>(nd2, gnew);
+                        return new Tuple<INode, Graph>(nd2, gnew);
                     }
                 }
                 var pr = new Primitive { name = name, inputs = inputs2, outputs = pr1.outputs, special = pr1.special, rate = rate };
@@ -302,21 +312,21 @@ namespace Cssc3
             throw new Exception("mk_node_u");
         }
 
-        public static Tuple<T, Graph> mk_node<T, U>(U ugen, Graph gr)
+        public static Tuple<INode, Graph> mk_node(IUgen ugen, Graph gr)
         {
             if (ugen is Constant<int>)
             {
-                return (Tuple<T, Graph>)(object)mk_node_c(ugen, gr);
+                return mk_node_c(ugen, gr);
             }
             else if (ugen is Primitive)
             {
-                return (Tuple<T, Graph>)(object)mk_node_u(ugen, gr);
+                return mk_node_u(ugen, gr);
             }
             else if (ugen is Mrg mg)
             {
-                var gn = mk_node<T, U>((U)mg.right, gr);
+                var gn = mk_node(mg.right, gr);
                 var g1 = gn.Item2;
-                return (Tuple<T, Graph>)mk_node<T, U>((U)mg.left, g1);
+                return mk_node(mg.left, g1);
 
             }
             throw new Exception("mk_node");
@@ -341,7 +351,7 @@ namespace Cssc3
             return node;
         }
 
-        public static object mrg_n(UgenL lst)
+        public static IUgen mrg_n(UgenL lst)
         {
             if (lst.l.Count == 1)
             {
@@ -353,12 +363,13 @@ namespace Cssc3
             }
             else
             {
-                var newLst = new UgenL(lst.l.GetRange(1, lst.l.Count));
+                var newLst = new UgenL();
+                newLst.l.AddRange(lst.l.GetRange(1, lst.l.Count));
                 return new Mrg { left = lst.l[0], right = mrg_n(newLst) };
             }
         }
 
-        public static object prepare_root<T>(T ugen)
+        public static IUgen prepare_root(IUgen ugen)
         {
             if (ugen is Mce mc)
             {
@@ -379,12 +390,12 @@ namespace Cssc3
             return new Graph { nextId = 0, constants = new List<NodeC>(), controls = new List<NodeK>(), ugens = new List<NodeU>() };
         }
 
-        public static Graph synth<T>(T ugen)
+        public static Graph synth(IUgen ugen)
         {
             try
             {
                 var root = prepare_root(ugen);
-                var gn = mk_node<object, object>(root, empty_graph());
+                var gn = mk_node(root, empty_graph());
                 var gr = gn.Item2;
                 var cs = gr.constants;
                 var ks = gr.controls;

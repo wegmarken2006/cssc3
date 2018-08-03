@@ -22,13 +22,19 @@ namespace Cssc3
         public class RateList : List<Rate> { }
         public class Ugen : object { }
 
+        public interface IUgen
+        {
+            bool isUgen();
+        }
+
+
         public struct UgenL
         {
-            public List<object> l;
+            public List<IUgen> l;
             //vararg constructor
-            public UgenL(params object[] values)
+            public UgenL(params IUgen[] values)
             {
-                l = new List<object>();
+                l = new List<IUgen>();
                 foreach (var value in values)
                 {
                     this.l.Add(value);
@@ -36,44 +42,49 @@ namespace Cssc3
             }
         }
 
-        public class Constant<T> 
+        public class Constant<T> : IUgen
         {
-            public T value {get; set;} 
+            bool IUgen.isUgen() { return true; }
+            public T value { get; set; }
         }
-        public class Mrg
+        public class Mrg : IUgen
         {
-            public object left {get; set;}
-            public object right {get; set;}
+            bool IUgen.isUgen() { return true; }
+            public IUgen left { get; set; }
+            public IUgen right { get; set; }
         }
-        public class Control
+        public class Control : IUgen
         {
-            public string name {get; set;}
-            public int index {get; set;} = 0;
-            public Rate rate {get; set;} = Rate.RateKr;
-        }
-
-        public class Primitive
-        {
-            public string name  {get; set;}
-            public UgenL inputs {get; set;}
-            public RateList outputs {get; set;}
-            public Rate rate {get; set;} = Rate.RateKr;
-            public int special {get; set;} = 0;
-            public int index {get; set;} = 0;
+            bool IUgen.isUgen() { return true; }
+            public string name { get; set; }
+            public int index { get; set; } = 0;
+            public Rate rate { get; set; } = Rate.RateKr;
         }
 
-
-        public class Mce
+        public class Primitive : IUgen
         {
-            public UgenL ugens {get; set;}
+            bool IUgen.isUgen() { return true; }
+            public string name { get; set; }
+            public UgenL inputs { get; set; }
+            public RateList outputs { get; set; }
+            public Rate rate { get; set; } = Rate.RateKr;
+            public int special { get; set; } = 0;
+            public int index { get; set; } = 0;
         }
 
 
-
-        public class Proxy
+        public class Mce : IUgen
         {
-            public Primitive primitive {get; set;}
-            public int index {get; set;} = 0;
+            bool IUgen.isUgen() {return true;}
+            public UgenL ugens { get; set; }
+        }
+
+
+        public class Proxy : IUgen
+        {
+            bool IUgen.isUgen() {return true;}
+            public Primitive primitive { get; set; }
+            public int index { get; set; } = 0;
         }
         public static Rate max_rate(RateList rates, Rate start = Rate.RateIr)
         {
@@ -95,7 +106,7 @@ namespace Cssc3
             return max1;
         }
 
-        public static Rate rate_of<T>(T ugen)
+        public static Rate rate_of(IUgen ugen)
         {
             if (ugen is Control ctrl)
             {
@@ -120,11 +131,11 @@ namespace Cssc3
             }
         }
 
-        public static void printUgen<T>(T ugen)
+        public static void printUgen(IUgen ugen)
         {
-            if (ugen is Control)
+            if (ugen is Control ctrl)
             {
-                Console.WriteLine("K: " + ((Control)(object)ugen).name);
+                Console.WriteLine("K: " + ctrl.name);
             }
             else if (ugen is Primitive)
             {
@@ -173,24 +184,26 @@ namespace Cssc3
 
         }
 
-    public static List<int> iota (int n, int init, int step)
-    {
-        if (n == 0) {
-            return new List<int>();
+        public static List<int> iota(int n, int init, int step)
+        {
+            if (n == 0)
+            {
+                return new List<int>();
+            }
+            else
+            {
+                var outL = new List<int> { init };
+                //out.addAll(outInit);
+                var retList = iota(n - 1, init + step, step);
+                outL.AddRange(retList);
+                return outL;
+            }
         }
-        else {
-            var outL = new List<int>{init};
-            //out.addAll(outInit);
-            var retList = iota(n-1, init+step, step);
-            outL.AddRange(retList);   
-            return outL;
-        }
-    }
 
-        public static List<object> extend(List<object> iList, int newLen)
+        public static List<IUgen> extend(List<IUgen> iList, int newLen)
         {
             var ln = iList.Count;
-            var vout = new List<object>();
+            var vout = new List<IUgen>();
             if (ln > newLen)
             {
                 return iList.GetRange(0, newLen);
@@ -202,15 +215,15 @@ namespace Cssc3
                 return extend(vout, newLen);
             }
         }
-        public static int mce_degree<T>(T ugen)
+        public static int mce_degree(IUgen ugen)
         {
-            if (ugen is Mce)
+            if (ugen is Mce mc)
             {
-                return ((Mce)(object)ugen).ugens.l.Count;
+                return mc.ugens.l.Count;
             }
-            else if (ugen is Mrg)
+            else if (ugen is Mrg mg)
             {
-                return mce_degree(((Mrg)(object)ugen).left);
+                return mce_degree(mg.left);
             }
             else
             {
@@ -218,20 +231,20 @@ namespace Cssc3
             }
         }
 
-        public static List<object> mce_extend<T>(int n, T ugen)
+        public static List<IUgen> mce_extend(int n, IUgen ugen) 
         {
-            if (ugen is Mce)
+            if (ugen is Mce mc)
             {
-                var iList = ((Mce)(object)ugen).ugens.l;
+                var iList = mc.ugens.l;
                 return extend(iList, n);
             }
-            else if (ugen is Mrg)
+            else if (ugen is Mrg mg)
             {
-                var ex = mce_extend(n, ((Mrg)(object)ugen).left);
+                var ex = mce_extend(n, mg.left);
                 var len = ex.Count;
                 if (len > 0)
                 {
-                    var outv = new List<object> { ugen };
+                    var outv = new List<IUgen> { ugen };
                     outv.AddRange(ex.GetRange(1, n - 1));
                     return outv;
                 }
@@ -242,7 +255,7 @@ namespace Cssc3
             }
             else
             {
-                var outv = new List<object>();
+                var outv = new List<IUgen>();
                 for (var ind = 0; ind < n; ind++)
                 {
                     outv.Add(ugen);
@@ -250,7 +263,7 @@ namespace Cssc3
                 return outv;
             }
         }
-        public static bool is_mce<T>(T ugen)
+        public static bool is_mce(IUgen ugen)
         {
             if (ugen is Mce)
             {
@@ -261,7 +274,7 @@ namespace Cssc3
                 return false;
             }
         }
-        public static void printLList<T>(List<List<T>> iList)
+        public static void printLList(List<List<IUgen>> iList)
         {
             var len1 = iList.Count;
             var len2 = iList[0].Count;
@@ -277,14 +290,14 @@ namespace Cssc3
             }
         }
 
-        public static List<List<object>> transposer(List<List<object>> iList)
+        public static List<List<T>> transposer<T>(List<List<T>> iList)
         {
             var len1 = iList.Count;
             var len2 = iList[0].Count;
-            var outv = new List<List<object>>();
+            var outv = new List<List<T>>();
             for (var ind = 0; ind < len2; ind++)
             {
-                outv.Add(new List<object>());
+                outv.Add(new List<T>());
             }
             for (var ind2 = 0; ind2 < len2; ind2++)
             {
@@ -296,11 +309,10 @@ namespace Cssc3
             return outv;
         }
 
-        public static Mce mce_transform<T>(T ugen)
+        public static Mce mce_transform(IUgen ugen)
         {
-            if (ugen is Primitive)
+            if (ugen is Primitive prim)
             {
-                var prim = ((Primitive)(object)ugen);
                 var inputs = prim.inputs;
                 var ins = inputs.l.Where(x => is_mce(x));
                 var degs = new List<int>();
@@ -309,20 +321,27 @@ namespace Cssc3
                     degs.Add(mce_degree(elem));
                 }
                 var upr = max_num(degs, 0);
-                var ext = new List<List<object>>();
+                var ext = new List<List<IUgen>>();
                 foreach (var elem in inputs.l)
                 {
                     ext.Add(mce_extend(upr, elem));
                 }
-                var iet = transposer(ext);
-                var outv = new List<object>();
+                var iet = transposer<IUgen>(ext);
+                var outv = new List<IUgen>();
                 //var outv = new UgenL();
                 foreach (var elem2 in iet)
                 {
                     var newInps = new UgenL();
                     newInps.l = elem2;
-                    var p = new Primitive{name=prim.name, inputs=newInps, outputs=prim.outputs,
-                     rate=prim.rate, special=prim.special, index=prim.index};
+                    var p = new Primitive
+                    {
+                        name = prim.name,
+                        inputs = newInps,
+                        outputs = prim.outputs,
+                        rate = prim.rate,
+                        special = prim.special,
+                        index = prim.index
+                    };
                     //outv.l.Add(p);
                     outv.Add(p);
 
@@ -330,7 +349,7 @@ namespace Cssc3
                 var newOut = new UgenL();
                 newOut.l = outv;
                 //return new Mce(ugens: outv);
-                return new Mce{ugens=newOut};
+                return new Mce { ugens = newOut };
             }
             else
             {
@@ -338,66 +357,75 @@ namespace Cssc3
             }
         }
 
-        
-        public static object mce_expand<T>(T ugen) {
+
+        public static IUgen mce_expand(IUgen ugen)
+        {
             if (ugen is Mce)
             {
-                var lst = new List<object>();
+                var lst = new List<IUgen>();
                 var ugens = ((Mce)(object)ugen).ugens.l;
-                foreach (var elem in ugens) {
+                foreach (var elem in ugens)
+                {
                     lst.Add(mce_expand(elem));
                 }
                 var outv = new UgenL();
                 outv.l = lst;
-                return new Mce{ugens=outv};
+                return new Mce { ugens = outv };
             }
             else if (ugen is Mrg)
             {
-                var left =  ((Mrg)(object)ugen).left;
-                var right =  ((Mrg)(object)ugen).right;
+                var left = ((Mrg)(object)ugen).left;
+                var right = ((Mrg)(object)ugen).right;
                 var ug1 = mce_expand(left);
-                return new Mrg{left=ug1, right=right};
+                return new Mrg { left = ug1, right = right };
             }
             else
             {
-                bool rec<V>(V ug) {
-                    if (ugen is Primitive) {
+                bool rec<V>(V ug)
+                {
+                    if (ugen is Primitive)
+                    {
                         var inputs = ((Primitive)(object)ug).inputs;
                         var ins = inputs.l.Where(is_mce);
                         return (ins.ToList().Count > 0);
                     }
                     else return false;
                 }
-                if (rec(ugen)) {
+                if (rec(ugen))
+                {
                     return mce_expand(mce_transform(ugen));
                 }
                 else return ugen;
             }
         }
 
-        public static object mce_channel(int n, object ugen) {
-            if (ugen is Mce) {
+        public static object mce_channel(int n, object ugen)
+        {
+            if (ugen is Mce)
+            {
                 var ugens = ((Mce)(object)ugen).ugens.l;
                 return ugens[n];
             }
             else throw new Exception("Error: mce_channel");
         }
 
-        public static UgenL mce_channels(object ugen)
+        public static UgenL mce_channels(IUgen ugen)
         {
-            if (ugen is Mce)
+            if (ugen is Mce mc)
             {
-                var ugens = ((Mce)(object)ugen).ugens;
+                var ugens = mc.ugens;
                 return ugens;
             }
-            else if (ugen is Mrg) {
-                var left =  ((Mrg)(object)ugen).left;
-                var right =  ((Mrg)(object)ugen).right;
+            else if (ugen is Mrg mg)
+            {
+                var left = mg.left;
+                var right = mg.right;
                 var lst = mce_channels(left);
                 var len = lst.l.Count;
-                if (len > 1) {
-                    var mrg1 = new Mrg{left=lst.l[0], right=right};
-                    var outv = new List<object>{mrg1};
+                if (len > 1)
+                {
+                    var mrg1 = new Mrg { left = lst.l[0], right = right };
+                    var outv = new List<IUgen> { mrg1 };
                     outv.AddRange(lst.l.GetRange(1, len - 1));
                     var newOut = new UgenL();
                     newOut.l = outv;
@@ -406,47 +434,56 @@ namespace Cssc3
                 }
                 else throw new Exception("Error: mce_channels");
             }
-            else {
-                var outv = new List<object>();
+            else
+            {
+                var outv = new List<IUgen>();
                 outv.Add(ugen);
                 var newOut = new UgenL();
                 newOut.l = outv;
                 return newOut;
-            }            
+            }
         }
 
-    public static object proxify (object ugen) 
-    {
-        if (ugen is Mce) {
-            var lst = new UgenL();
-            foreach (object elem in ((Mce)ugen).ugens.l) {
-                lst.l.Add(proxify(elem));
-            }
-            return new Mce{ugens=lst};
-        }
-        else if (ugen is Mrg) {
-            var prx = proxify(((Mrg)ugen).left);
-            return new Mrg{left=prx, right=((Mrg)ugen).right};
-        }
-        else if (ugen is Primitive) {
-            var ln = ((Primitive)ugen).outputs.Count;
-            if (ln < 2) {
-                return ugen;
-            }
-            else {
-                var lst1 = iota(ln, 0, 1);
-                var lst2 = new UgenL();
-                foreach (var ind in lst1) {
-                    lst2.l.Add(proxify(new Proxy{primitive=(Primitive)ugen, index=ind}));
+        public static IUgen proxify(IUgen ugen)
+        {
+            if (ugen is Mce mc)
+            {
+                var lst = new UgenL();
+                foreach (var elem in mc.ugens.l)
+                {
+                    lst.l.Add(proxify(elem));
                 }
-                return new Mce{ugens=lst2};
+                return new Mce { ugens = lst };
             }
+            else if (ugen is Mrg)
+            {
+                var prx = proxify(((Mrg)ugen).left);
+                return new Mrg { left = prx, right = ((Mrg)ugen).right };
+            }
+            else if (ugen is Primitive)
+            {
+                var ln = ((Primitive)ugen).outputs.Count;
+                if (ln < 2)
+                {
+                    return ugen;
+                }
+                else
+                {
+                    var lst1 = iota(ln, 0, 1);
+                    var lst2 = new UgenL();
+                    foreach (var ind in lst1)
+                    {
+                        lst2.l.Add(proxify(new Proxy { primitive = (Primitive)ugen, index = ind }));
+                    }
+                    return new Mce { ugens = lst2 };
+                }
 
+            }
+            else
+            {
+                throw new Exception("proxify");
+            }
         }
-        else {
-            throw new Exception("proxify");
-        }
-    }
 
 
     }
