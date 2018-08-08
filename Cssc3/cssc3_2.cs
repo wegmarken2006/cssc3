@@ -343,7 +343,7 @@ namespace Cssc3
                 nid = -1,
                 name = "Control",
                 inputs = new UgenL(),
-                outputs = new List<Rate>(),
+                outputs = rates,
                 ugenId = 0,
                 special = 0,
                 rate = Rate.RateKr
