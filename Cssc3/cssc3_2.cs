@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.Text;
 
+using static Cssc3.Osc;
 
 
 namespace Cssc3
@@ -9,7 +12,8 @@ namespace Cssc3
 
     static public partial class SC3
     {
-        public interface INode {
+        public interface INode
+        {
             bool isNode();
         }
 
@@ -415,6 +419,104 @@ namespace Cssc3
             {
                 throw new Exception("synth");
             }
+        }
+
+        public static byte[] encode_node_k(MMap mm, INode node)
+        {
+
+            var nk = (NodeK)(object)node;
+            var out1 = str_pstr(nk.name);
+            var id1 = fetch(nk.nid, mm.ks);
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+            bw.Write(out1);
+            bw.Write(encode_i16(id1));
+            return stream.ToArray();
+        }
+        public static byte[] encode_input(Input inp)
+        {
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+            bw.Write(encode_i16(inp.u));
+            bw.Write(encode_i16(inp.p));
+            return stream.ToArray();
+        }
+        public static Input mk_input(MMap mm, IUgen fp)
+        {
+            if (fp is FromPortC fpc)
+            {
+                var p = fetch(fpc.port_nid, mm.cs);
+                return new Input { u = -1, p = p };
+            }
+            if (fp is FromPortK fpk)
+            {
+                var p = fetch(fpk.port_nid, mm.ks);
+                return new Input { u = 0, p = p };
+            }
+            if (fp is FromPortU fpu)
+            {
+                var u = fetch(fpu.port_nid, mm.us);
+                return new Input { u = u, p = fpu.port_idx };
+            }
+            throw new Exception("mk_input");
+        }
+
+        public static byte[] encode_node_u(MMap mm, INode node)
+        {
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+            var nu = ((NodeU)node);
+            var len1 = nu.inputs.l.Count;
+            var len2 = nu.outputs.Count;
+            bw.Write(Osc.str_pstr(nu.name));
+            bw.Write(Osc.encode_i8((int)nu.rate));
+            bw.Write(Osc.encode_i16(len1));
+            bw.Write(Osc.encode_i16(len2));
+            for (var ind = 0; ind < len1; ind = ind + 1)
+            {
+                bw.Write(encode_input(mk_input(mm, nu.inputs.l[ind])));
+            }
+            for (var ind = 0; ind < len2; ind = ind + 1)
+            {
+                bw.Write(Osc.encode_i8((int)nu.outputs[ind]));
+            }
+            return stream.ToArray();
+        }
+        public static byte[] encode_graphdef(String name, Graph graph)
+        {
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+            var mm = mk_map(graph);
+
+            bw.Write(Osc.encode_str("SCgf"));
+            bw.Write(Osc.encode_i32(0));
+            bw.Write(Osc.encode_i32(1));
+            bw.Write(Osc.str_pstr(name));
+            bw.Write(Osc.encode_i16(graph.constants.Count));
+            var l1 = graph.constants.Select(x=>node_c_value(x));
+            foreach (var elem in l1)
+            {
+                bw.Write(Osc.encode_f32(elem));
+            }
+            bw.Write(Osc.encode_i16(graph.controls.Count));
+            var l2 = graph.controls.Select(x=>node_k_default(x));
+            foreach (var elem in l2)
+            {
+                bw.Write(Osc.encode_f32(elem));
+            }
+            bw.Write(Osc.encode_i16(graph.controls.Count));
+            foreach (var elem in graph.controls)
+            {
+                bw.Write(encode_node_k(mm, elem));
+            }
+            bw.Write(Osc.encode_i16(graph.ugens.Count));
+
+            foreach (var elem in graph.ugens)
+            {
+                bw.Write(encode_node_u(mm, elem));
+            }
+
+            return stream.ToArray();
         }
 
     }
