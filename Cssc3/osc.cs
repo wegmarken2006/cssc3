@@ -205,7 +205,6 @@ namespace Cssc3
             public static string UdpIP;
             public static int UdpPort;
             public static UdpClient UdpCl;
-            public static IPEndPoint Ep;
         }
 
         public static void sc_start()
@@ -221,14 +220,13 @@ namespace Cssc3
             var client = new UdpClient();
             PortConfig.UdpIP = "127.0.0.1";
             PortConfig.UdpPort = 57110;
-            IPEndPoint ep = new IPEndPoint(
+            var ep = new IPEndPoint(
                 IPAddress.Parse(PortConfig.UdpIP), PortConfig.UdpPort);
 
             PortConfig.UdpCl = client;
-            PortConfig.Ep = ep;
 
             client.Client.SendTimeout = 2000;
-            client.Client.ReceiveTimeout = 10000;
+            client.Client.ReceiveTimeout = 2000;
             try
             {
                 client.Connect(ep);
@@ -238,12 +236,10 @@ namespace Cssc3
                 Console.WriteLine("Connect error: ");
                 Console.WriteLine(e.Message);
             }
-
         }
         public static void osc_send(byte[] message)
         {
             var client = PortConfig.UdpCl;
-            var ep = PortConfig.Ep;
 
             try
             {
@@ -252,6 +248,7 @@ namespace Cssc3
                 var tref = new ThreadStart(osc_receive);
                 var tthread = new Thread(tref);
                 tthread.Start();
+                //tthread.Join();
             }
             catch (System.Exception e)
             {
@@ -262,7 +259,9 @@ namespace Cssc3
 
         public static void osc_receive() {
             var client = PortConfig.UdpCl;
-            var ep = PortConfig.Ep;
+            var ep = new IPEndPoint(
+            IPAddress.Parse(PortConfig.UdpIP), PortConfig.UdpPort);
+
             try
             {
                 var receivedData = client.Receive(ref ep);
