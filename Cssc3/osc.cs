@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 
 //git remote add origin https://github.com/wegmarken2006/cssc3.git
 //git push -u origin master
@@ -168,11 +169,12 @@ namespace Cssc3
             public string Name { get; set; }
             public object[] LDatum { get; set; }
         }
-        public static byte[] encode_message(Message message) {
+        public static byte[] encode_message(Message message)
+        {
             var stream = new MemoryStream();
             var bw = new BinaryWriter(stream);
             bw.Write(encode_datum(message.Name));
-            bw.Write(descriptor(message.LDatum));
+            bw.Write(encode_datum(descriptor(message.LDatum)));
 
             foreach (var item in message.LDatum)
             {
@@ -180,61 +182,99 @@ namespace Cssc3
             }
             return stream.ToArray();
         }
-        public static void send_message(Message message) {
+
+        public static void print_barray(byte[] ba)
+        {
+            foreach (var item in ba)
+            {
+                Console.Write(item);
+                Console.Write(" ");
+            }
+
+        }
+        public static void send_message(Message message)
+        {
             var bmsg = encode_message(message);
-            Console.WriteLine("DEBUG");
-            Console.WriteLine(bmsg);
+            Console.WriteLine("\nDEBUG");
+            print_barray(bmsg);
             osc_send(bmsg);
         }
 
-        public static class PortConfig {
+        public static class PortConfig
+        {
             public static string UdpIP;
             public static int UdpPort;
             public static UdpClient UdpCl;
             public static IPEndPoint Ep;
         }
- 
-        public static void sc_start() {
+
+        public static void sc_start()
+        {
             osc_set_port();
-            var msg1 = new Message{Name="/notify",LDatum=new object[]{1}};
+            var msg1 = new Message { Name = "/notify", LDatum = new object[] { 1 } };
             send_message(msg1);
-            msg1 = new Message{Name="/g_new",LDatum=new object[]{1, 1, 0}};
+            msg1 = new Message { Name = "/g_new", LDatum = new object[] { 1, 1, 0 } };
             send_message(msg1);
         }
         public static void osc_set_port()
         {
             var client = new UdpClient();
             PortConfig.UdpIP = "127.0.0.1";
-            PortConfig.UdpPort = 56610; //57710;
+            PortConfig.UdpPort = 57110;
             IPEndPoint ep = new IPEndPoint(
-                IPAddress.Parse(PortConfig.UdpIP), PortConfig.UdpPort); 
-        
+                IPAddress.Parse(PortConfig.UdpIP), PortConfig.UdpPort);
+
             PortConfig.UdpCl = client;
             PortConfig.Ep = ep;
-           
+
             client.Client.SendTimeout = 2000;
-            client.Client.ReceiveTimeout = 2000;
+            client.Client.ReceiveTimeout = 10000;
             try
             {
-                client.Connect(ep);    
+                client.Connect(ep);
             }
             catch (System.Exception e)
             {
+                Console.WriteLine("Connect error: ");
                 Console.WriteLine(e.Message);
             }
-            
+
         }
-        public static void osc_send(byte[] message) {
+        public static void osc_send(byte[] message)
+        {
             var client = PortConfig.UdpCl;
             var ep = PortConfig.Ep;
 
-            // send data
-            client.Send(message, message.Length);
+            try
+            {
+                // send data
+                client.Send(message, message.Length);
+                var tref = new ThreadStart(osc_receive);
+                var tthread = new Thread(tref);
+                tthread.Start();
+            }
+            catch (System.Exception e)
+            {
+                Console.WriteLine("Send error: ");
+                Console.WriteLine(e.Message);
+            }
+        }
 
-            // then receive data
-            var receivedData = client.Receive(ref ep);
-
-            Console.Write("receive data from " + ep.ToString());
+        public static void osc_receive() {
+            var client = PortConfig.UdpCl;
+            var ep = PortConfig.Ep;
+            try
+            {
+                var receivedData = client.Receive(ref ep);
+                Console.WriteLine("\nReceived: ");
+                print_barray(receivedData);
+            }
+            catch (System.Exception e)
+            {
+                Console.WriteLine("Receive error: ");
+                Console.WriteLine(e.Message);
+            }
+           
         }
 
 
