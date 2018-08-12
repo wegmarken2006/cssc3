@@ -3,7 +3,8 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Net;
+using System.Net.Sockets;
 
 //git remote add origin https://github.com/wegmarken2006/cssc3.git
 //git push -u origin master
@@ -99,6 +100,147 @@ namespace Cssc3
             bw.Write(bb);
             return stream.ToArray();
         }
+        public static int align(int n)
+        {
+            return 4 - n % 4;
+        }
+        public static byte[] extend_(byte[] pad, byte[] bts)
+        {
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+
+            var n = align(bts.Length);
+            bw.Write(bts);
+
+            for (var ind = 0; ind < n; ind++)
+            {
+                bw.Write(pad);
+            }
+            return stream.ToArray();
+        }
+        public static byte[] encode_string(string str)
+        {
+            var eb = new byte[] { 0x0 };
+            //eb[0] = 0;
+            return extend_(eb, encode_str(str));
+        }
+
+        public static byte[] encode_blob(byte[] bts)
+        {
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+            bw.Write(bts.Length);
+            var eb = new byte[] { 0x0 };
+            bw.Write(extend_(eb, bts));
+            return stream.ToArray();
+        }
+
+        public static byte[] encode_datum(object dt)
+        {
+            if (dt is int dti) return encode_i32(dti);
+            if (dt is double dtd) return encode_f32(dtd);
+            if (dt is string dts) return encode_string(dts);
+            if (dt is byte[] dtb) return encode_blob(dtb);
+            throw new Exception("encodedatum");
+        }
+
+        public static string tag(object dt)
+        {
+            if (dt is int dti) return "i";
+            if (dt is double dtd) return "f";
+            if (dt is string dts) return "s";
+            if (dt is byte[] dtb) return "b";
+            throw new Exception("encodedatum");
+        }
+
+        public static string descriptor(object[] dt)
+        {
+            var sout = ",";
+            foreach (var item in dt)
+            {
+                sout = sout + tag(item);
+            }
+
+            return sout;
+        }
+        public class Message
+        {
+            public string Name { get; set; }
+            public object[] LDatum { get; set; }
+        }
+        public static byte[] encode_message(Message message) {
+            var stream = new MemoryStream();
+            var bw = new BinaryWriter(stream);
+            bw.Write(encode_datum(message.Name));
+            bw.Write(descriptor(message.LDatum));
+
+            foreach (var item in message.LDatum)
+            {
+                bw.Write(encode_datum(item));
+            }
+            return stream.ToArray();
+        }
+        public static void send_message(Message message) {
+            var bmsg = encode_message(message);
+            Console.WriteLine("DEBUG");
+            Console.WriteLine(bmsg);
+            osc_send(bmsg);
+        }
+
+        public static class PortConfig {
+            public static string UdpIP;
+            public static int UdpPort;
+            public static UdpClient UdpCl;
+            public static IPEndPoint Ep;
+        }
+ 
+        public static void sc_start() {
+            osc_set_port();
+            var msg1 = new Message{Name="/notify",LDatum=new object[]{1}};
+            send_message(msg1);
+            msg1 = new Message{Name="/g_new",LDatum=new object[]{1, 1, 0}};
+            send_message(msg1);
+        }
+        public static void osc_set_port()
+        {
+            var client = new UdpClient();
+            PortConfig.UdpIP = "127.0.0.1";
+            PortConfig.UdpPort = 56610; //57710;
+            IPEndPoint ep = new IPEndPoint(
+                IPAddress.Parse(PortConfig.UdpIP), PortConfig.UdpPort); 
+        
+            PortConfig.UdpCl = client;
+            PortConfig.Ep = ep;
+           
+            client.Client.SendTimeout = 2000;
+            client.Client.ReceiveTimeout = 2000;
+            try
+            {
+                client.Connect(ep);    
+            }
+            catch (System.Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            
+        }
+        public static void osc_send(byte[] message) {
+            var client = PortConfig.UdpCl;
+            var ep = PortConfig.Ep;
+
+            // send data
+            client.Send(message, message.Length);
+
+            // then receive data
+            var receivedData = client.Receive(ref ep);
+
+            Console.Write("receive data from " + ep.ToString());
+        }
+
+
+
+
+
 
 
 
