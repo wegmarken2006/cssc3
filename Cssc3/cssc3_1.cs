@@ -19,14 +19,22 @@ namespace Cssc3
             RateDr = 3
         }
 
+
         public class RateList : List<Rate> { }
         public class Ugen : object { }
 
+        public static class UID {
+            static int uid = 0;
+
+            public static int nextUID() {
+                uid = uid + 1;
+                return uid;
+            }
+        } 
         public interface IUgen
         {
             bool isUgen();
         }
-
 
         public struct UgenL
         {

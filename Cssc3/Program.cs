@@ -16,9 +16,15 @@ namespace MainTest
         static void Main(string[] args)
         {
  
-            sc_start();
-
+            //sc_start();
+            printUgen(UAbs(new Constant<int>{value=-3}));
             Console.WriteLine("END");
         }
+
+        static IUgen UAbs(object ugen) {
+            return mk_unary_operator(5, Math.Abs, ugen);
+        }
+
+
     }
 }

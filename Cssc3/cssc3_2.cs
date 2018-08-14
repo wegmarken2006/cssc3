@@ -493,13 +493,13 @@ namespace Cssc3
             bw.Write(Osc.encode_i32(1));
             bw.Write(Osc.str_pstr(name));
             bw.Write(Osc.encode_i16(graph.constants.Count));
-            var l1 = graph.constants.Select(x=>node_c_value(x));
+            var l1 = graph.constants.Select(x => node_c_value(x));
             foreach (var elem in l1)
             {
                 bw.Write(Osc.encode_f32(elem));
             }
             bw.Write(Osc.encode_i16(graph.controls.Count));
-            var l2 = graph.controls.Select(x=>node_k_default(x));
+            var l2 = graph.controls.Select(x => node_k_default(x));
             foreach (var elem in l2)
             {
                 bw.Write(Osc.encode_f32(elem));
@@ -517,6 +517,74 @@ namespace Cssc3
             }
 
             return stream.ToArray();
+        }
+
+        public static IUgen mk_osc_mce(Rate rate, string name, UgenL inputs, IUgen ugen, int ou)
+        {
+            var rl = new RateList { };
+            for (var ind = 0; ind < ou; ind++)
+            {
+                rl.Add(rate);
+            }
+            var inps = new UgenL { };
+            inps.l.AddRange(mce_channels(ugen).l);
+            return mk_ugen(name, inps, rl, 0, 0, rate);
+        }
+
+        public static IUgen mk_osc_id(Rate rate, string name, UgenL inputs, IUgen ugen, int ou)
+        {
+            var rl = new RateList { };
+            for (var ind = 0; ind < ou; ind++)
+            {
+                rl.Add(rate);
+            }
+            var inps = new UgenL { };
+            inps.l.AddRange(mce_channels(ugen).l);
+            return mk_ugen(name, inps, rl, UID.nextUID(), 0, rate);
+        }
+        public static IUgen mk_oscillator(Rate rate, string name, UgenL inputs, IUgen ugen, int ou)
+        {
+            var rl = new RateList { };
+            for (var ind = 0; ind < ou; ind++)
+            {
+                rl.Add(rate);
+            }
+            return mk_ugen(name, inputs, rl, 0, 0, rate);
+        }
+
+        public static IUgen mk_operator(string name, UgenL inputs, int sp)
+        {
+            var rates = new RateList { };
+            foreach (var elem in inputs.l)
+            {
+                rates.Add(rate_of(elem));
+            }
+            var maxrate = max_rate(rates, Rate.RateIr);
+            var outs = new RateList { maxrate };
+            return mk_ugen(name, inputs, outs, 0, sp, maxrate);
+        }
+        public static IUgen mk_unary_operator(int sp, Func<double, double> fun, object op)
+        {
+            if (op is Constant<int> ci)
+            {
+                var val = fun((double)ci.value);
+                return new Constant<double> { value = val };
+            }
+            if (op is Constant<double> cd)
+            {
+                var val = fun(cd.value);
+                return new Constant<double> { value = val };
+            }
+            var ops = new UgenL { };
+            if (op is int opi)
+            {
+                ops.l.Add(new Constant<int> { value = opi });
+            }
+            if (op is double opd)
+            {
+                ops.l.Add(new Constant<double> { value = opd });
+            }
+            return mk_operator("UnaryOpUGen", ops, sp);
         }
 
     }
