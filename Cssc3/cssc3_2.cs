@@ -85,7 +85,7 @@ namespace Cssc3
         int ind = 0, int sp = 0, Rate rate = Rate.RateKr)
         {
             var pr1 = new Primitive { name = name, inputs = inputs, outputs = outputs, index = ind, special = sp, rate = rate };
-            return proxify(pr1);
+            return proxify(mce_expand(pr1));
         }
 
         public static int node_c_value(NodeC node)
